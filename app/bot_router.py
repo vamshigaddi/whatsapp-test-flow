@@ -1,5 +1,6 @@
 """Bot Router and Conversation Flow for Diyama Jewellers."""
 
+import asyncio
 import logging
 from typing import Any, Dict, Optional
 from app.config import settings
@@ -39,12 +40,14 @@ async def handle_incoming_message(msg: Dict[str, Any], sender_name: Optional[str
 
     logger.info("Handling incoming %s message from %s (Name: %s, ID: %s)", msg_type, from_phone, sender_name, msg_id)
 
-    # Automatically mark message as read (shows double blue ticks to the user)
+    # Automatically mark message as read (blue ticks) and show live 'typing...' animation
     if msg_id:
         try:
-            await whatsapp_client.mark_as_read(msg_id)
+            await whatsapp_client.mark_as_read(msg_id, show_typing=True)
+            # Subtle realistic typing delay (0.7s) so customer experiences the animated typing bubble
+            await asyncio.sleep(0.7)
         except Exception as e:
-            logger.warning("Could not mark message as read: %s", e)
+            logger.warning("Could not mark message as read / show typing: %s", e)
 
 
     if msg_type == "text":

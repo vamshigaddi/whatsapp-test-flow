@@ -59,14 +59,28 @@ class WhatsAppClient:
                     return {"error": str(e)}
 
 
-    async def mark_as_read(self, message_id: str) -> Dict[str, Any]:
-        """Marks an incoming WhatsApp message as read (displays double blue ticks)."""
+    async def mark_as_read(self, message_id: str, show_typing: bool = True) -> Dict[str, Any]:
+        """
+        Marks an incoming WhatsApp message as read (displays double blue ticks)
+        and activates the live animated 'typing...' indicator for the customer.
+        """
         payload = {
             "messaging_product": "whatsapp",
             "status": "read",
             "message_id": message_id
         }
-        return await self._post_payload(payload)
+        if show_typing:
+            payload["typing_indicator"] = {"type": "text"}
+
+        res = await self._post_payload(payload)
+
+        # Graceful fallback: If typing_indicator is not supported, send standard read receipt
+        if isinstance(res, dict) and "error" in res and show_typing:
+            logger.info("Retrying mark_as_read without typing indicator...")
+            payload.pop("typing_indicator", None)
+            return await self._post_payload(payload)
+
+        return res
 
     async def send_text(self, to: str, text: str, preview_url: bool = False) -> Dict[str, Any]:
         """Sends a standard text message."""
