@@ -1,7 +1,12 @@
 """Startup script for Diyama Jewellers WhatsApp API backend."""
 
+import sys
 import uvicorn
 from app.config import settings
+
+# Ensure UTF-8 output on Windows consoles
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 if __name__ == "__main__":
     print("=" * 60)
