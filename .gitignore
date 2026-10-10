@@ -1,0 +1,36 @@
+.env
+.env.example
+
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# OS / Editor files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+
+# Other temporary files
+*.tmp
+tmp/
+temp-*.txt
+*.cache
+.github/
