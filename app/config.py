@@ -101,7 +101,9 @@ class Settings:
     @property
     def WHATSAPP_REDIRECT_PHONE(self) -> str:
         """Sanitized phone digits for wa.me links on the digital showcase."""
-        raw = os.getenv("WHATSAPP_BOT_PHONE", os.getenv("STORE_PHONE", "15556502265"))
+        raw = os.getenv("WHATSAPP_BOT_PHONE", "").strip()
+        if not raw:
+            return "15556502265"
         digits = "".join(c for c in raw if c.isdigit())
         return digits or "15556502265"
 

@@ -4,7 +4,7 @@ import io
 import csv
 import logging
 import urllib.parse
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, Request, Response, Query, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -197,17 +197,24 @@ async def test_simulate(phone: str = Query("919876543210"), action: str = Query(
 
 
 @app.get("/lookbook", response_class=HTMLResponse)
-async def view_lookbook():
+async def view_lookbook(mode: Optional[str] = Query(None), phone: Optional[str] = Query(None)):
     """Renders digital showcase with interactive WhatsApp action buttons."""
-    phone = settings.WHATSAPP_REDIRECT_PHONE
+    redirect_phone = "".join(c for c in phone if c.isdigit()) if phone else settings.WHATSAPP_REDIRECT_PHONE
+    if not redirect_phone:
+        redirect_phone = "15556502265"
 
-    if settings.is_skincare_mode:
-        general_chat = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I am browsing your clinical aesthetics menu and have a question.")
-        general_book = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to book a doctor consultation.")
+    is_skin = (mode.lower() == "skincare") if mode else settings.is_skincare_mode
+
+    if is_skin:
+        store_name = settings.STORE_NAME if settings.is_skincare_mode else "Aura Skin & Aesthetics Clinic"
+        store_address = settings.STORE_ADDRESS if settings.is_skincare_mode else "Aura Aesthetics Clinic, Road No. 36, Jubilee Hills, Hyderabad"
+        store_hours = settings.STORE_HOURS if settings.is_skincare_mode else "Mon - Sat: 10:00 AM - 8:00 PM (Sunday by Appt)"
+        general_chat = urllib.parse.quote(f"Hi {store_name}, I am browsing your clinical aesthetics menu and have a question.")
+        general_book = urllib.parse.quote(f"Hi {store_name}, I would like to book a doctor consultation.")
         cards_html = ""
         for t in CLINIC_TREATMENTS.values():
-            enquire_msg = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to enquire about {t.title} ({t.retailer_id})")
-            book_msg = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to book a doctor consultation for {t.title} ({t.retailer_id})")
+            enquire_msg = urllib.parse.quote(f"Hi {store_name}, I would like to enquire about {t.title} ({t.retailer_id})")
+            book_msg = urllib.parse.quote(f"Hi {store_name}, I would like to book a doctor consultation for {t.title} ({t.retailer_id})")
             cards_html += f"""
             <div class="card">
                 <div class="img-wrap">
@@ -225,26 +232,29 @@ async def view_lookbook():
                     <div class="price">{t.price_formatted}</div>
                     <p class="desc">{t.description}</p>
                     <div class="card-actions">
-                        <a class="btn-action btn-enquire" href="https://wa.me/{phone}?text={enquire_msg}" target="_blank">
+                        <a class="btn-action btn-enquire" href="https://wa.me/{redirect_phone}?text={enquire_msg}" target="_blank">
                             💬 Enquire
                         </a>
-                        <a class="btn-action btn-book" href="https://wa.me/{phone}?text={book_msg}" target="_blank">
+                        <a class="btn-action btn-book" href="https://wa.me/{redirect_phone}?text={book_msg}" target="_blank">
                             📅 Book Doctor
                         </a>
                     </div>
                 </div>
             </div>
             """
-        page_title = f"{settings.STORE_NAME} • Aesthetic Dermatology Showcase"
+        page_title = f"{store_name} • Aesthetic Dermatology Showcase"
         subtitle = "Medical Aesthetics & Advanced Dermatology • Jubilee Hills"
         tag_badge = "✨ CLINICAL TREATMENT MENU"
     else:
-        general_chat = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I am browsing your jewellery collection and have a question.")
-        general_book = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to book a VIP studio viewing.")
+        store_name = settings.STORE_NAME if not settings.is_skincare_mode else "Diyama Jewellers"
+        store_address = settings.STORE_ADDRESS if not settings.is_skincare_mode else "Diyama Jewellers- Premium Lab Grown Diamond Jewellery in Banjara hills"
+        store_hours = settings.STORE_HOURS if not settings.is_skincare_mode else "Mon - Sun: 10:30 AM - 8:30 PM"
+        general_chat = urllib.parse.quote(f"Hi {store_name}, I am browsing your jewellery collection and have a question.")
+        general_book = urllib.parse.quote(f"Hi {store_name}, I would like to book a VIP studio viewing.")
         cards_html = ""
         for p in PRODUCTS.values():
-            enquire_msg = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to enquire about {p.title} ({p.retailer_id})")
-            book_msg = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to book an appointment to view {p.title} ({p.retailer_id})")
+            enquire_msg = urllib.parse.quote(f"Hi {store_name}, I would like to enquire about {p.title} ({p.retailer_id})")
+            book_msg = urllib.parse.quote(f"Hi {store_name}, I would like to book an appointment to view {p.title} ({p.retailer_id})")
             cards_html += f"""
             <div class="card">
                 <div class="img-wrap">
@@ -262,17 +272,17 @@ async def view_lookbook():
                     <div class="price">{p.price_formatted}</div>
                     <p class="desc">{p.description}</p>
                     <div class="card-actions">
-                        <a class="btn-action btn-enquire" href="https://wa.me/{phone}?text={enquire_msg}" target="_blank">
+                        <a class="btn-action btn-enquire" href="https://wa.me/{redirect_phone}?text={enquire_msg}" target="_blank">
                             💬 Enquire
                         </a>
-                        <a class="btn-action btn-book" href="https://wa.me/{phone}?text={book_msg}" target="_blank">
+                        <a class="btn-action btn-book" href="https://wa.me/{redirect_phone}?text={book_msg}" target="_blank">
                             📅 Book Viewing
                         </a>
                     </div>
                 </div>
             </div>
             """
-        page_title = f"{settings.STORE_NAME} • Haute Joaillerie Showcase"
+        page_title = f"{store_name} • Haute Joaillerie Showcase"
         subtitle = "Haute Joaillerie & Lab-Grown Diamonds • Flagship Studio"
         tag_badge = "💎 EXCLUSIVE FINE JEWELLERY"
 
@@ -553,13 +563,13 @@ async def view_lookbook():
     <body>
         <header>
             <div class="tag-badge">{tag_badge}</div>
-            <h1>{settings.STORE_NAME}</h1>
+            <h1>{store_name}</h1>
             <div class="subtitle">{subtitle}</div>
             <div class="header-actions">
-                <a class="hdr-btn hdr-chat" href="https://wa.me/{phone}?text={general_chat}" target="_blank">
+                <a class="hdr-btn hdr-chat" href="https://wa.me/{redirect_phone}?text={general_chat}" target="_blank">
                     💬 WhatsApp Concierge
                 </a>
-                <a class="hdr-btn hdr-book" href="https://wa.me/{phone}?text={general_book}" target="_blank">
+                <a class="hdr-btn hdr-book" href="https://wa.me/{redirect_phone}?text={general_book}" target="_blank">
                     📅 Book VIP Appointment
                 </a>
             </div>
@@ -568,9 +578,9 @@ async def view_lookbook():
             {cards_html}
         </div>
         <div class="footer">
-            📍 {settings.STORE_ADDRESS}<br>🕒 {settings.STORE_HOURS}
+            📍 {store_address}<br>🕒 {store_hours}
         </div>
-        <a class="floating-wa" href="https://wa.me/{phone}?text={general_chat}" target="_blank">
+        <a class="floating-wa" href="https://wa.me/{redirect_phone}?text={general_chat}" target="_blank">
             💬 Chat on WhatsApp
         </a>
     </body>
