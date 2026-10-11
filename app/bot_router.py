@@ -88,33 +88,13 @@ async def send_main_menu(to: str, customer_name: Optional[str] = None):
         )
         sections = [
             {
-                "title": "Clinical Treatments",
+                "title": "✨ Clinic Concierge",
                 "rows": [
-                    {
-                        "id": "menu_facials",
-                        "title": "🌟 Medi-Facials & Glow",
-                        "description": "HydraFacial, Carbon Peel & Glass Skin"
-                    },
-                    {
-                        "id": "menu_lasers",
-                        "title": "⚡ Laser & Skin Therapy",
-                        "description": "Laser Hair Reduction & Acne RF MNRF"
-                    },
-                    {
-                        "id": "menu_hair",
-                        "title": "🌿 Hair & Scalp Care",
-                        "description": "GFC Therapy & Hair Fall Control"
-                    },
                     {
                         "id": "menu_visual_catalogue",
-                        "title": "🖼️ Treatment Showcase",
-                        "description": "Photo guide with benefits & fees"
-                    }
-                ]
-            },
-            {
-                "title": "Clinic & Doctors",
-                "rows": [
+                        "title": "🖼️ Browse Treatments",
+                        "description": "Clinical photos, fees & doctor benefits"
+                    },
                     {
                         "id": "menu_appointment",
                         "title": "📅 Book Doctor Consult",
@@ -132,51 +112,36 @@ async def send_main_menu(to: str, customer_name: Optional[str] = None):
         await whatsapp_client.send_list(
             to=to,
             body_text=body_text,
-            button_label="Explore Treatments",
+            button_label="Explore Menu",
             sections=sections,
             header_text=f"{settings.STORE_NAME}",
             footer_text="Board-Certified Dermatologists"
         )
         return
 
-    # Clean, elegant core sections for Diyama Jewellers
+    # Clean, elegant core 3 choices for Diyama Jewellers
     body_text = (
         f"✨ *Welcome to Diyama Jewellers*{name_str} ✨\n\n"
-        "Thank you for contacting Diyama Jewellers. What are you searching for?"
+        "Thank you for contacting Diyama Jewellers. How may our concierge assist you today?"
     )
 
     sections = [
         {
-            "title": "💎 Our Fine Collections",
+            "title": "💎 Diyama Concierge",
             "rows": [
-                {
-                    "id": "menu_rings",
-                    "title": "💍 Rings",
-                    "description": "Solitaires, Halo & Eternity Diamond Rings"
-                },
-                {
-                    "id": "menu_wedding_rings",
-                    "title": "👰 Wedding rings",
-                    "description": "Couple Bands, Platinum Duo & Pavé Sets"
-                },
                 {
                     "id": "menu_visual_catalogue",
-                    "title": "🖼️ Visual Catalogue",
+                    "title": "🖼️ Browse Jewellery",
                     "description": "Full photo lookbook with specs & prices"
-                }
-            ]
-        },
-        {
-            "title": "🛎️ Bespoke Services",
-            "rows": [
+                },
                 {
                     "id": "menu_appointment",
-                    "title": "📅 Appointment booking",
+                    "title": "📅 Book Appointment",
                     "description": "VIP Studio Visit or Google Meet Virtual Call"
                 },
                 {
                     "id": "menu_location",
-                    "title": "📍 Location search",
+                    "title": "📍 Boutique Location",
                     "description": "Find our luxury boutique address & directions"
                 }
             ]

@@ -209,12 +209,9 @@ async def view_lookbook(mode: Optional[str] = Query(None), phone: Optional[str] 
         store_name = settings.STORE_NAME if settings.is_skincare_mode else "Aura Skin & Aesthetics Clinic"
         store_address = settings.STORE_ADDRESS if settings.is_skincare_mode else "Aura Aesthetics Clinic, Road No. 36, Jubilee Hills, Hyderabad"
         store_hours = settings.STORE_HOURS if settings.is_skincare_mode else "Mon - Sat: 10:00 AM - 8:00 PM (Sunday by Appt)"
-        general_chat = urllib.parse.quote(f"Hi {store_name}, I am browsing your clinical aesthetics menu and have a question.")
-        general_book = urllib.parse.quote(f"Hi {store_name}, I would like to book a doctor consultation.")
         cards_html = ""
         for t in CLINIC_TREATMENTS.values():
-            enquire_msg = urllib.parse.quote(f"Hi {store_name}, I would like to enquire about {t.title} ({t.retailer_id})")
-            book_msg = urllib.parse.quote(f"Hi {store_name}, I would like to book a doctor consultation for {t.title} ({t.retailer_id})")
+            action_msg = urllib.parse.quote(f"Hi {store_name}, I am interested in {t.title} ({t.retailer_id}) and would like to enquire / book a doctor consultation.")
             cards_html += f"""
             <div class="card">
                 <div class="img-wrap">
@@ -231,14 +228,9 @@ async def view_lookbook(mode: Optional[str] = Query(None), phone: Optional[str] 
                     </div>
                     <div class="price">{t.price_formatted}</div>
                     <p class="desc">{t.description}</p>
-                    <div class="card-actions">
-                        <a class="btn-action btn-enquire" href="https://wa.me/{redirect_phone}?text={enquire_msg}" target="_blank">
-                            💬 Enquire
-                        </a>
-                        <a class="btn-action btn-book" href="https://wa.me/{redirect_phone}?text={book_msg}" target="_blank">
-                            📅 Book Doctor
-                        </a>
-                    </div>
+                    <a class="btn-card-primary" href="https://wa.me/{redirect_phone}?text={action_msg}" target="_blank">
+                        📅 Book / Enquire Consultation
+                    </a>
                 </div>
             </div>
             """
@@ -249,12 +241,9 @@ async def view_lookbook(mode: Optional[str] = Query(None), phone: Optional[str] 
         store_name = settings.STORE_NAME if not settings.is_skincare_mode else "Diyama Jewellers"
         store_address = settings.STORE_ADDRESS if not settings.is_skincare_mode else "Diyama Jewellers- Premium Lab Grown Diamond Jewellery in Banjara hills"
         store_hours = settings.STORE_HOURS if not settings.is_skincare_mode else "Mon - Sun: 10:30 AM - 8:30 PM"
-        general_chat = urllib.parse.quote(f"Hi {store_name}, I am browsing your jewellery collection and have a question.")
-        general_book = urllib.parse.quote(f"Hi {store_name}, I would like to book a VIP studio viewing.")
         cards_html = ""
         for p in PRODUCTS.values():
-            enquire_msg = urllib.parse.quote(f"Hi {store_name}, I would like to enquire about {p.title} ({p.retailer_id})")
-            book_msg = urllib.parse.quote(f"Hi {store_name}, I would like to book an appointment to view {p.title} ({p.retailer_id})")
+            action_msg = urllib.parse.quote(f"Hi {store_name}, I am interested in {p.title} ({p.retailer_id}) and would like to enquire / book a viewing.")
             cards_html += f"""
             <div class="card">
                 <div class="img-wrap">
@@ -271,14 +260,9 @@ async def view_lookbook(mode: Optional[str] = Query(None), phone: Optional[str] 
                     </div>
                     <div class="price">{p.price_formatted}</div>
                     <p class="desc">{p.description}</p>
-                    <div class="card-actions">
-                        <a class="btn-action btn-enquire" href="https://wa.me/{redirect_phone}?text={enquire_msg}" target="_blank">
-                            💬 Enquire
-                        </a>
-                        <a class="btn-action btn-book" href="https://wa.me/{redirect_phone}?text={book_msg}" target="_blank">
-                            📅 Book Viewing
-                        </a>
-                    </div>
+                    <a class="btn-card-primary" href="https://wa.me/{redirect_phone}?text={action_msg}" target="_blank">
+                        💬 Enquire / Book Viewing
+                    </a>
                 </div>
             </div>
             """
@@ -346,45 +330,7 @@ async def view_lookbook(mode: Optional[str] = Query(None), phone: Optional[str] 
                 color: var(--muted);
                 letter-spacing: 1px;
                 text-transform: uppercase;
-                margin-bottom: 24px;
-            }}
-            .header-actions {{
-                display: flex;
-                justify-content: center;
-                gap: 12px;
-                flex-wrap: wrap;
-                margin-top: 10px;
-            }}
-            .hdr-btn {{
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                padding: 11px 22px;
-                border-radius: 30px;
-                text-decoration: none;
-                font-size: 0.88rem;
-                font-weight: 600;
-                transition: all 0.25s ease;
-            }}
-            .hdr-chat {{
-                background: rgba(255, 255, 255, 0.05);
-                color: var(--text);
-                border: 1px solid var(--border);
-            }}
-            .hdr-chat:hover {{
-                background: rgba(255, 255, 255, 0.1);
-                border-color: var(--gold);
-                color: #fff;
-            }}
-            .hdr-book {{
-                background: linear-gradient(135deg, var(--gold) 0%, #b89146 100%);
-                color: #0b0c10;
-                border: 1px solid var(--gold);
-                box-shadow: 0 4px 15px rgba(223,186,115,0.25);
-            }}
-            .hdr-book:hover {{
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(223,186,115,0.4);
+                margin-bottom: 8px;
             }}
             .container {{
                 max-width: 1160px;
@@ -482,47 +428,29 @@ async def view_lookbook(mode: Optional[str] = Query(None), phone: Optional[str] 
                 margin-bottom: 20px;
                 flex-grow: 1;
             }}
-            .card-actions {{
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-                margin-top: auto;
-            }}
-            .btn-action {{
-                display: inline-flex;
+            .btn-card-primary {{
+                display: flex;
                 align-items: center;
                 justify-content: center;
-                gap: 6px;
-                padding: 12px 10px;
-                border-radius: 8px;
+                gap: 8px;
+                width: 100%;
+                padding: 13px 16px;
+                border-radius: 9px;
                 text-decoration: none;
-                font-size: 0.84rem;
+                font-size: 0.88rem;
                 font-weight: 600;
-                transition: all 0.2s ease;
-                cursor: pointer;
-                text-align: center;
-            }}
-            .btn-enquire {{
-                background: rgba(223, 186, 115, 0.1);
-                color: var(--gold-light);
-                border: 1px solid rgba(223, 186, 115, 0.45);
-            }}
-            .btn-enquire:hover {{
-                background: rgba(223, 186, 115, 0.22);
-                border-color: var(--gold);
-                transform: translateY(-2px);
-                color: #fff;
-            }}
-            .btn-book {{
+                color: #ffffff;
                 background: linear-gradient(135deg, var(--wa-green) 0%, var(--wa-dark) 100%);
-                color: #fff;
-                border: 1px solid var(--wa-green);
-                box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+                border: 1px solid rgba(223, 186, 115, 0.35);
+                box-shadow: 0 4px 14px rgba(37, 211, 102, 0.25);
+                transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+                cursor: pointer;
+                margin-top: auto;
             }}
-            .btn-book:hover {{
-                filter: brightness(1.1);
+            .btn-card-primary:hover {{
                 transform: translateY(-2px);
-                box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+                box-shadow: 0 6px 18px rgba(37, 211, 102, 0.42);
+                filter: brightness(1.08);
             }}
             .footer {{
                 text-align: center;
@@ -531,32 +459,9 @@ async def view_lookbook(mode: Optional[str] = Query(None), phone: Optional[str] 
                 margin-top: 40px;
                 padding: 20px;
             }}
-            .floating-wa {{
-                position: fixed;
-                bottom: 24px;
-                right: 24px;
-                background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-                color: #ffffff;
-                border-radius: 50px;
-                padding: 12px 20px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                text-decoration: none;
-                font-weight: 600;
-                font-size: 0.9rem;
-                box-shadow: 0 8px 24px rgba(37, 211, 102, 0.35);
-                z-index: 999;
-                transition: transform 0.25s ease, box-shadow 0.25s ease;
-            }}
-            .floating-wa:hover {{
-                transform: scale(1.05);
-                box-shadow: 0 10px 28px rgba(37, 211, 102, 0.5);
-            }}
             @media (max-width: 480px) {{
                 h1 {{ font-size: 1.8rem; }}
                 .container {{ grid-template-columns: 1fr; }}
-                .card-actions {{ grid-template-columns: 1fr; }}
             }}
         </style>
     </head>
@@ -565,14 +470,6 @@ async def view_lookbook(mode: Optional[str] = Query(None), phone: Optional[str] 
             <div class="tag-badge">{tag_badge}</div>
             <h1>{store_name}</h1>
             <div class="subtitle">{subtitle}</div>
-            <div class="header-actions">
-                <a class="hdr-btn hdr-chat" href="https://wa.me/{redirect_phone}?text={general_chat}" target="_blank">
-                    💬 WhatsApp Concierge
-                </a>
-                <a class="hdr-btn hdr-book" href="https://wa.me/{redirect_phone}?text={general_book}" target="_blank">
-                    📅 Book VIP Appointment
-                </a>
-            </div>
         </header>
         <div class="container">
             {cards_html}
@@ -580,9 +477,6 @@ async def view_lookbook(mode: Optional[str] = Query(None), phone: Optional[str] 
         <div class="footer">
             📍 {store_address}<br>🕒 {store_hours}
         </div>
-        <a class="floating-wa" href="https://wa.me/{redirect_phone}?text={general_chat}" target="_blank">
-            💬 Chat on WhatsApp
-        </a>
     </body>
     </html>
     """
