@@ -92,11 +92,18 @@ class Settings:
 
     @property
     def PUBLIC_URL(self) -> str:
-        return os.getenv("PUBLIC_URL", "https://bucked-essential-bluff.ngrok-free.dev").rstrip("/")
+        return os.getenv("PUBLIC_URL", "https://whatsapp-flow-442562762160.asia-south1.run.app").rstrip("/")
 
     @property
     def LOOKBOOK_URL(self) -> str:
         return f"{self.PUBLIC_URL}/lookbook"
+
+    @property
+    def WHATSAPP_REDIRECT_PHONE(self) -> str:
+        """Sanitized phone digits for wa.me links on the digital showcase."""
+        raw = os.getenv("WHATSAPP_BOT_PHONE", os.getenv("STORE_PHONE", "15556502265"))
+        digits = "".join(c for c in raw if c.isdigit())
+        return digits or "15556502265"
 
     @property
     def PORT(self) -> int:

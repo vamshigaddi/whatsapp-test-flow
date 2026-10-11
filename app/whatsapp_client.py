@@ -138,6 +138,44 @@ class WhatsAppClient:
         }
         return await self._post_payload(payload)
 
+    async def send_cta_url_button(
+        self,
+        to: str,
+        body_text: str,
+        button_text: str,
+        url: str,
+        header_text: Optional[str] = None,
+        footer_text: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Sends an interactive Call-to-Action (CTA) URL button.
+        When tapped in WhatsApp, it opens the web URL directly in the in-app browser!
+        """
+        interactive: Dict[str, Any] = {
+            "type": "cta_url",
+            "body": {"text": body_text},
+            "action": {
+                "name": "cta_url",
+                "parameters": {
+                    "display_text": button_text[:20],
+                    "url": url
+                }
+            }
+        }
+        if header_text:
+            interactive["header"] = {"type": "text", "text": header_text[:60]}
+        if footer_text:
+            interactive["footer"] = {"text": footer_text[:60]}
+
+        payload = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": to,
+            "type": "interactive",
+            "interactive": interactive
+        }
+        return await self._post_payload(payload)
+
     async def send_list(
         self,
         to: str,

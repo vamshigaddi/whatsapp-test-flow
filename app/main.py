@@ -3,6 +3,7 @@
 import io
 import csv
 import logging
+import urllib.parse
 from typing import Any, Dict, List
 from fastapi import FastAPI, Request, Response, Query, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse, HTMLResponse
@@ -197,14 +198,20 @@ async def test_simulate(phone: str = Query("919876543210"), action: str = Query(
 
 @app.get("/lookbook", response_class=HTMLResponse)
 async def view_lookbook():
-    """Renders digital showcase for Diyama Jewellers or Aesthetics Clinic."""
+    """Renders digital showcase with interactive WhatsApp action buttons."""
+    phone = settings.WHATSAPP_REDIRECT_PHONE
+
     if settings.is_skincare_mode:
+        general_chat = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I am browsing your clinical aesthetics menu and have a question.")
+        general_book = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to book a doctor consultation.")
         cards_html = ""
         for t in CLINIC_TREATMENTS.values():
+            enquire_msg = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to enquire about {t.title} ({t.retailer_id})")
+            book_msg = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to book a doctor consultation for {t.title} ({t.retailer_id})")
             cards_html += f"""
             <div class="card">
                 <div class="img-wrap">
-                    <img src="{t.image_url}" alt="{t.title}" />
+                    <img src="{t.image_url}" alt="{t.title}" loading="lazy" />
                     <span class="badge">{t.category}</span>
                 </div>
                 <div class="card-body">
@@ -217,21 +224,31 @@ async def view_lookbook():
                     </div>
                     <div class="price">{t.price_formatted}</div>
                     <p class="desc">{t.description}</p>
-                    <a class="wa-btn" href="https://wa.me/{settings.STORE_PHONE.replace(' ', '').replace('+', '')}?text=Hi%20{settings.STORE_NAME},%20I%20am%20interested%20in%20{t.title}%20({t.retailer_id})" target="_blank">
-                        Enquire on WhatsApp
-                    </a>
+                    <div class="card-actions">
+                        <a class="btn-action btn-enquire" href="https://wa.me/{phone}?text={enquire_msg}" target="_blank">
+                            💬 Enquire
+                        </a>
+                        <a class="btn-action btn-book" href="https://wa.me/{phone}?text={book_msg}" target="_blank">
+                            📅 Book Doctor
+                        </a>
+                    </div>
                 </div>
             </div>
             """
         page_title = f"{settings.STORE_NAME} • Aesthetic Dermatology Showcase"
         subtitle = "Medical Aesthetics & Advanced Dermatology • Jubilee Hills"
+        tag_badge = "✨ CLINICAL TREATMENT MENU"
     else:
+        general_chat = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I am browsing your jewellery collection and have a question.")
+        general_book = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to book a VIP studio viewing.")
         cards_html = ""
         for p in PRODUCTS.values():
+            enquire_msg = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to enquire about {p.title} ({p.retailer_id})")
+            book_msg = urllib.parse.quote(f"Hi {settings.STORE_NAME}, I would like to book an appointment to view {p.title} ({p.retailer_id})")
             cards_html += f"""
             <div class="card">
                 <div class="img-wrap">
-                    <img src="{p.image_url}" alt="{p.title}" />
+                    <img src="{p.image_url}" alt="{p.title}" loading="lazy" />
                     <span class="badge">{p.category}</span>
                 </div>
                 <div class="card-body">
@@ -244,14 +261,20 @@ async def view_lookbook():
                     </div>
                     <div class="price">{p.price_formatted}</div>
                     <p class="desc">{p.description}</p>
-                    <a class="wa-btn" href="https://wa.me/{settings.STORE_PHONE.replace(' ', '').replace('+', '')}?text=Hi%20Diyama%20Jewellers,%20I%20am%20interested%20in%20{p.title}%20({p.retailer_id})" target="_blank">
-                        Enquire on WhatsApp
-                    </a>
+                    <div class="card-actions">
+                        <a class="btn-action btn-enquire" href="https://wa.me/{phone}?text={enquire_msg}" target="_blank">
+                            💬 Enquire
+                        </a>
+                        <a class="btn-action btn-book" href="https://wa.me/{phone}?text={book_msg}" target="_blank">
+                            📅 Book Viewing
+                        </a>
+                    </div>
                 </div>
             </div>
             """
         page_title = f"{settings.STORE_NAME} • Haute Joaillerie Showcase"
-        subtitle = "Haute Joaillerie & Lab-Grown Diamonds • Banjara Hills"
+        subtitle = "Haute Joaillerie & Lab-Grown Diamonds • Flagship Studio"
+        tag_badge = "💎 EXCLUSIVE FINE JEWELLERY"
 
     html = f"""
     <!DOCTYPE html>
@@ -260,63 +283,120 @@ async def view_lookbook():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{page_title}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>
             :root {{
-                --bg: #0c0d10;
-                --surface: #14171d;
-                --border: #262a33;
+                --bg: #0b0c10;
+                --surface: #13161f;
+                --surface-hover: #191e2b;
+                --border: #232838;
                 --gold: #dfba73;
                 --gold-light: #f4d99b;
-                --text: #eaecee;
-                --muted: #8b929e;
+                --text: #f0f2f5;
+                --muted: #9aa1b0;
+                --wa-green: #25D366;
+                --wa-dark: #128C7E;
             }}
             * {{ box-sizing: border-box; margin: 0; padding: 0; }}
             body {{
                 background-color: var(--bg);
                 color: var(--text);
                 font-family: 'Montserrat', sans-serif;
-                padding-bottom: 60px;
+                padding-bottom: 80px;
+                line-height: 1.5;
             }}
             header {{
                 text-align: center;
-                padding: 45px 20px 25px;
+                padding: 50px 20px 30px;
                 border-bottom: 1px solid var(--border);
-                background: linear-gradient(180deg, rgba(223,186,115,0.06) 0%, rgba(12,13,16,0) 100%);
+                background: radial-gradient(circle at 50% 0%, rgba(223,186,115,0.12) 0%, rgba(11,12,16,0) 70%);
+            }}
+            .tag-badge {{
+                display: inline-block;
+                padding: 5px 14px;
+                border-radius: 20px;
+                background: rgba(223,186,115,0.1);
+                border: 1px solid rgba(223,186,115,0.3);
+                color: var(--gold);
+                font-size: 0.75rem;
+                font-weight: 600;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                margin-bottom: 12px;
             }}
             h1 {{
                 font-family: 'Cinzel', serif;
-                font-size: 2.1rem;
+                font-size: 2.3rem;
                 letter-spacing: 3px;
                 color: var(--gold);
                 margin-bottom: 8px;
             }}
             .subtitle {{
-                font-size: 0.9rem;
+                font-size: 0.92rem;
                 color: var(--muted);
                 letter-spacing: 1px;
                 text-transform: uppercase;
+                margin-bottom: 24px;
+            }}
+            .header-actions {{
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+                flex-wrap: wrap;
+                margin-top: 10px;
+            }}
+            .hdr-btn {{
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 11px 22px;
+                border-radius: 30px;
+                text-decoration: none;
+                font-size: 0.88rem;
+                font-weight: 600;
+                transition: all 0.25s ease;
+            }}
+            .hdr-chat {{
+                background: rgba(255, 255, 255, 0.05);
+                color: var(--text);
+                border: 1px solid var(--border);
+            }}
+            .hdr-chat:hover {{
+                background: rgba(255, 255, 255, 0.1);
+                border-color: var(--gold);
+                color: #fff;
+            }}
+            .hdr-book {{
+                background: linear-gradient(135deg, var(--gold) 0%, #b89146 100%);
+                color: #0b0c10;
+                border: 1px solid var(--gold);
+                box-shadow: 0 4px 15px rgba(223,186,115,0.25);
+            }}
+            .hdr-book:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(223,186,115,0.4);
             }}
             .container {{
-                max-width: 1100px;
-                margin: 30px auto;
+                max-width: 1160px;
+                margin: 40px auto;
                 padding: 0 20px;
                 display: grid;
                 grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-                gap: 25px;
+                gap: 28px;
             }}
             .card {{
                 background: var(--surface);
                 border: 1px solid var(--border);
-                border-radius: 12px;
+                border-radius: 14px;
                 overflow: hidden;
-                transition: transform 0.25s ease, border-color 0.25s ease;
+                transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
                 display: flex;
                 flex-direction: column;
             }}
             .card:hover {{
-                transform: translateY(-4px);
-                border-color: var(--gold);
+                transform: translateY(-5px);
+                border-color: rgba(223,186,115,0.6);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
             }}
             .img-wrap {{
                 position: relative;
@@ -329,23 +409,24 @@ async def view_lookbook():
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
-                transition: transform 0.4s ease;
+                transition: transform 0.5s ease;
             }}
             .card:hover .img-wrap img {{
-                transform: scale(1.05);
+                transform: scale(1.06);
             }}
             .badge {{
                 position: absolute;
                 top: 14px;
                 right: 14px;
-                background: rgba(12, 13, 16, 0.85);
-                backdrop-filter: blur(8px);
+                background: rgba(11, 12, 16, 0.88);
+                backdrop-filter: blur(10px);
                 color: var(--gold);
-                padding: 4px 10px;
-                font-size: 0.75rem;
+                padding: 5px 12px;
+                font-size: 0.72rem;
+                font-weight: 600;
                 border-radius: 20px;
                 letter-spacing: 0.5px;
-                border: 1px solid var(--gold);
+                border: 1px solid rgba(223,186,115,0.5);
             }}
             .card-body {{
                 padding: 22px;
@@ -356,19 +437,20 @@ async def view_lookbook():
             .sku {{
                 font-size: 0.75rem;
                 color: var(--gold);
-                letter-spacing: 1px;
+                letter-spacing: 1.5px;
+                font-weight: 600;
                 text-transform: uppercase;
                 margin-bottom: 6px;
             }}
             h3 {{
                 font-family: 'Cinzel', serif;
-                font-size: 1.15rem;
+                font-size: 1.18rem;
                 margin-bottom: 12px;
-                line-height: 1.3;
+                line-height: 1.35;
                 color: #fff;
             }}
             .specs {{
-                font-size: 0.82rem;
+                font-size: 0.83rem;
                 color: var(--muted);
                 line-height: 1.6;
                 margin-bottom: 14px;
@@ -377,50 +459,120 @@ async def view_lookbook():
             }}
             .specs strong {{ color: var(--text); }}
             .price {{
-                font-size: 1.25rem;
-                font-weight: 600;
+                font-size: 1.35rem;
+                font-weight: 700;
                 color: var(--gold-light);
                 margin-bottom: 10px;
+                letter-spacing: 0.5px;
             }}
             .desc {{
-                font-size: 0.82rem;
+                font-size: 0.84rem;
                 color: var(--muted);
-                line-height: 1.5;
-                margin-bottom: 18px;
+                line-height: 1.55;
+                margin-bottom: 20px;
                 flex-grow: 1;
             }}
-            .wa-btn {{
-                display: block;
-                text-align: center;
-                background: linear-gradient(135deg, #1fa357 0%, #168144 100%);
-                color: #fff;
-                padding: 12px 16px;
+            .card-actions {{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-top: auto;
+            }}
+            .btn-action {{
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                padding: 12px 10px;
                 border-radius: 8px;
                 text-decoration: none;
-                font-size: 0.88rem;
+                font-size: 0.84rem;
                 font-weight: 600;
-                transition: opacity 0.2s ease;
+                transition: all 0.2s ease;
+                cursor: pointer;
+                text-align: center;
             }}
-            .wa-btn:hover {{ opacity: 0.92; }}
+            .btn-enquire {{
+                background: rgba(223, 186, 115, 0.1);
+                color: var(--gold-light);
+                border: 1px solid rgba(223, 186, 115, 0.45);
+            }}
+            .btn-enquire:hover {{
+                background: rgba(223, 186, 115, 0.22);
+                border-color: var(--gold);
+                transform: translateY(-2px);
+                color: #fff;
+            }}
+            .btn-book {{
+                background: linear-gradient(135deg, var(--wa-green) 0%, var(--wa-dark) 100%);
+                color: #fff;
+                border: 1px solid var(--wa-green);
+                box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+            }}
+            .btn-book:hover {{
+                filter: brightness(1.1);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+            }}
             .footer {{
                 text-align: center;
                 color: var(--muted);
-                font-size: 0.85rem;
-                margin-top: 30px;
+                font-size: 0.88rem;
+                margin-top: 40px;
+                padding: 20px;
+            }}
+            .floating-wa {{
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+                color: #ffffff;
+                border-radius: 50px;
+                padding: 12px 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 0.9rem;
+                box-shadow: 0 8px 24px rgba(37, 211, 102, 0.35);
+                z-index: 999;
+                transition: transform 0.25s ease, box-shadow 0.25s ease;
+            }}
+            .floating-wa:hover {{
+                transform: scale(1.05);
+                box-shadow: 0 10px 28px rgba(37, 211, 102, 0.5);
+            }}
+            @media (max-width: 480px) {{
+                h1 {{ font-size: 1.8rem; }}
+                .container {{ grid-template-columns: 1fr; }}
+                .card-actions {{ grid-template-columns: 1fr; }}
             }}
         </style>
     </head>
     <body>
         <header>
+            <div class="tag-badge">{tag_badge}</div>
             <h1>{settings.STORE_NAME}</h1>
             <div class="subtitle">{subtitle}</div>
+            <div class="header-actions">
+                <a class="hdr-btn hdr-chat" href="https://wa.me/{phone}?text={general_chat}" target="_blank">
+                    💬 WhatsApp Concierge
+                </a>
+                <a class="hdr-btn hdr-book" href="https://wa.me/{phone}?text={general_book}" target="_blank">
+                    📅 Book VIP Appointment
+                </a>
+            </div>
         </header>
         <div class="container">
             {cards_html}
         </div>
         <div class="footer">
-            📍 {settings.STORE_ADDRESS} • 🕒 {settings.STORE_HOURS}
+            📍 {settings.STORE_ADDRESS}<br>🕒 {settings.STORE_HOURS}
         </div>
+        <a class="floating-wa" href="https://wa.me/{phone}?text={general_chat}" target="_blank">
+            💬 Chat on WhatsApp
+        </a>
     </body>
     </html>
     """

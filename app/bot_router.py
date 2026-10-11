@@ -203,8 +203,26 @@ async def process_text_input(to: str, text: str, sender_name: Optional[str] = No
         await process_action(to, text, text, sender_name)
         return
 
+    # Lookbook deep link handler: Match specific product SKU / retailer_id
+    for pid, p in PRODUCTS.items():
+        if p.retailer_id.lower() in text_lower or pid.lower() in text_lower:
+            if any(k in text_lower for k in ["book", "appointment", "viewing", "visit", "slot", "reserve"]):
+                await start_appointment_flow(to, interested_product=pid)
+            else:
+                await show_product_card(to, pid)
+            return
+
+    # Lookbook deep link handler: Match specific clinic treatment SKU
+    for tid, t in CLINIC_TREATMENTS.items():
+        if t.retailer_id.lower() in text_lower or tid.lower() in text_lower:
+            if any(k in text_lower for k in ["book", "appointment", "doctor", "consult", "slot", "reserve"]):
+                await start_appointment_flow(to, interested_product=tid)
+            else:
+                await show_clinic_treatment_card(to, tid)
+            return
+
     if settings.is_skincare_mode:
-        if any(k in text_lower for k in ["catalog", "catalogue", "lookbook", "photo", "image", "gallery", "treatment", "showcase"]):
+        if any(k in text_lower for k in ["catalog", "catalogue", "lookbook", "photo", "image", "gallery", "treatment", "showcase", "browse"]):
             await show_visual_catalogue(to)
         elif any(k in text_lower for k in ["facial", "glow", "hydra", "carbon", "glass"]):
             await show_clinic_category(to, "Medi-Facials & Glow")
@@ -221,7 +239,7 @@ async def process_text_input(to: str, text: str, sender_name: Optional[str] = No
         return
 
     # Direct keyword routing for Diyama Jewellers
-    if any(k in text_lower for k in ["catalog", "catalogue", "lookbook", "photo", "image", "gallery"]):
+    if any(k in text_lower for k in ["catalog", "catalogue", "lookbook", "photo", "image", "gallery", "browse"]):
         await show_visual_catalogue(to)
     elif any(k in text_lower for k in ["ring", "solitaire", "diamond ring"]):
         await show_rings_submenu(to)
@@ -543,97 +561,47 @@ async def show_product_card(to: str, product_id: str):
 
 async def show_visual_catalogue(to: str):
     """
-    Delivers a visual catalogue directly in WhatsApp chat:
-    - In Skincare Mode: Sends 3 aesthetic dermatology procedure photos with fees & benefits.
-    - In Jewellery Mode: Sends 3 signature diamond rings with INR pricing & specs.
+    Delivers an interactive Call-to-Action (CTA) URL button for the digital showcase.
+    Tapping '💎 Browse Catalogue' opens the luxury showcase directly inside WhatsApp!
     """
     if settings.is_skincare_mode:
-        intro = (
-            f"✨ *{settings.STORE_NAME} • Treatment Showcase* ✨\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "Here are our signature aesthetic dermatology procedures performed by specialist doctors:"
+        header = f"✨ {settings.STORE_NAME}"
+        body = (
+            "✨ *Clinical Aesthetics & Treatment Menu* ✨\n\n"
+            "Browse our complete medical aesthetics showcase, including US-FDA approved HydraFacials, "
+            "Painless Lasers, Acne RF Microneedling, and GFC Hair Regrowth therapies with transparent fees, session durations, and doctor notes.\n\n"
+            "Tap the button below to review all clinical treatments and book doctor appointments:"
         )
-        await whatsapp_client.send_text(to, intro)
-
-        showcases = [
-            CLINIC_TREATMENTS["treat_hydrafacial"],
-            CLINIC_TREATMENTS["treat_carbon_peel"],
-            CLINIC_TREATMENTS["treat_gfc_hair"]
-        ]
-        for t in showcases:
-            caption = (
-                f"🌟 *{t.title}*\n"
-                f"💰 *Fee:* {t.price_formatted} ({t.duration})\n"
-                f"👩‍⚕️ *Doctor:* {t.doctor}\n"
-                f"🎯 *Benefits:* {t.benefits}\n"
-                f"🏷️ *Code:* `{t.retailer_id}`"
-            )
-            await whatsapp_client.send_image(to, t.image_url, caption=caption)
-
-        summary_text = (
-            f"📖 *Full Clinical Treatment Menu:*\n"
-            f"{settings.LOOKBOOK_URL}\n\n"
-            f"*(Tap the link above to view all facial, laser, and hair therapies)*\n\n"
-            f"Would you like to schedule an appointment with our dermatologist?"
+        button_text = "✨ Browse Treatments"
+        footer = "Jubilee Hills Clinic • Board-Certified Dermatologists"
+    else:
+        header = f"💎 {settings.STORE_NAME}"
+        body = (
+            "✨ *Haute Joaillerie Digital Showcase* ✨\n\n"
+            "Explore our handcrafted collection of certified diamond solitaires, "
+            "bridal couple bands, and platinum suites with high-definition imagery, transparent pricing, karat weights, and IGI/GIA grading.\n\n"
+            "Tap the button below to browse all jewellery pieces in our digital boutique:"
         )
+        button_text = "💎 Browse Catalogue"
+        footer = "Banjara Hills Boutique • Certified Diamonds"
 
-        buttons = [
-            {"id": "book_treat_treat_hydrafacial", "title": "📅 Book Doctor"},
-            {"id": "menu_lasers", "title": "⚡ Laser Therapies"},
-            {"id": "menu_main", "title": "🏠 Main Menu"}
-        ]
-
-        await whatsapp_client.send_buttons(
-            to=to,
-            body_text=summary_text,
-            buttons=buttons,
-            footer_text=f"{settings.STORE_NAME} • Jubilee Hills"
-        )
-        return
-
-    # Diyama Jewellers flow
-    rings = get_products_by_category("Rings")
-
-    # Send introductory text
-    intro = (
-        "💎 *Diyama Jewellers • Visual Catalogue* 💎\n"
-        "━━━━━━━━━━━━━━━━━━\n"
-        "Here are our signature certified diamond rings cast in 18K gold and platinum:"
-    )
-    await whatsapp_client.send_text(to, intro)
-
-    # Deliver photos directly in chat
-    for r in rings:
-        caption = (
-            f"💍 *{r.title}*\n"
-            f"💰 *Price:* {r.price_formatted}\n"
-            f"⚜️ *Metal:* {r.gold_metal}\n"
-            f"✨ *Diamonds:* {r.diamond_specs}\n"
-            f"📜 *Certification:* {r.certification}\n"
-            f"🏷️ *Item Code:* `{r.retailer_id}`"
-        )
-        await whatsapp_client.send_image(to, r.image_url, caption=caption)
-
-    # Provide Lookbook link & action buttons
-    summary_text = (
-        f"📖 *Full Digital Lookbook:*\n"
-        f"{settings.LOOKBOOK_URL}\n\n"
-        f"*(Tap the link above to view all pieces, bridal bands, and full specifications)*\n\n"
-        f"Would you like to schedule a private viewing for any of these pieces?"
-    )
-
-    buttons = [
-        {"id": "book_prod_ring_solitaire", "title": "📅 Book Viewing"},
-        {"id": "menu_wedding_rings", "title": "👰 Wedding Bands"},
-        {"id": "menu_main", "title": "🏠 Main Menu"}
-    ]
-
-    await whatsapp_client.send_buttons(
+    # Send the native interactive CTA URL button
+    res = await whatsapp_client.send_cta_url_button(
         to=to,
-        body_text=summary_text,
-        buttons=buttons,
-        footer_text="Diyama Jewellers • Banjara Hills"
+        header_text=header,
+        body_text=body,
+        button_text=button_text,
+        url=settings.LOOKBOOK_URL,
+        footer_text=footer
     )
+
+    # Graceful fallback: If CTA URL is not supported by a specific client version, send link
+    if isinstance(res, dict) and "error" in res:
+        logger.warning("CTA URL failed, sending text fallback: %s", res)
+        await whatsapp_client.send_text(
+            to=to,
+            text=f"{body}\n\n📖 *Open Digital Showcase:*\n{settings.LOOKBOOK_URL}"
+        )
 
 
 
